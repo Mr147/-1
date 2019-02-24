@@ -24,7 +24,7 @@ def getData(add, totalPage, proxiesIp):
     for page in range(totalPage):
         url = ''
         headers = {"User-Agent": ua.random}
-        proxies = proxiesIps[random.randint(0, len(proxiesIps)-1)]
+        proxies = proxiesIps[random.sample(available_table, 1)[0]]
         print('ip:'+proxies)
         time.sleep(1)
         if page > 0:
@@ -33,7 +33,7 @@ def getData(add, totalPage, proxiesIp):
             url = baseUrl % (add, "")
         while True:
             try:
-                req = requests.get(url, headers=headers, proxies=proxies, timeout=10)
+                req = requests.get(url, headers=headers, proxies=proxies, timeout=3)
                 break
             except requests.exceptions.ConnectionError:
                 print('ConnectionError -- please wait 3 seconds')
@@ -79,9 +79,11 @@ def getTotalPage(add):
 
 def getProAndCity():
     url = "http://www.bankofchina.com/sourcedb/operations/"
+    proxies=proxiesIps[random.sample(available_table, 1)[0]]
+    headers = {"User-Agent": ua.random}
     while True:
         try:
-            req = requests.get(url, {'User-Agent': ua.random}, timeout=10)
+            req = requests.get(url, proxies=proxies, headers=headers, timeout=3)
         except requests.exceptions.ConnectionError:
             print('ConnectionError -- please wait 3 seconds')
             time.sleep(3)
@@ -107,7 +109,7 @@ def getProxies():
     headers = {'User-Agent': ua.random}
     while True:
         try:
-            req = requests.get(url, headers=headers, timeout=10)
+            req = requests.get(url, headers=headers, timeout=3)
             break
         except requests.exceptions.ConnectionError:
             print('ConnectionError -- please wait 3 seconds')
@@ -136,9 +138,9 @@ def check_one(url_check,i):
     #setting timeout
     socket.setdefaulttimeout(8)
     try:
-        req = requests.get(url, proxies=proxiesIps[i], headers={'User-Agent':ua.random}, timeout=10)
+        req = requests.get(url_check, proxies=proxiesIps[i], headers={'User-Agent':ua.random}, timeout=3)
         lock.acquire()
-        print(proxiesIps[i] + 'is OK')
+        print(str(proxiesIps[i]) + 'is OK')
         #get available ip index
         available_table.append(i)
         lock.release()
@@ -151,7 +153,7 @@ def mul_thread_check(url_mul_check):
     threads = []
     for i in range(len(proxiesIps)):
         #creat thread...
-        thread = threading.Thread(target=check_one, args=[url_mul_check,i,])
+        thread = threading.Thread(target=check_one, args=[url_mul_check,i])
         threads.append(thread)
         thread.start()
         print("new thread start" + str(i))
@@ -166,15 +168,16 @@ def mul_thread_check(url_mul_check):
     print("available proxy ip:" + str(len(available_table)))
 
 getProxies()
-print(proxiesIps)
+print(available_table)
 print('-----------------------------------------------')
-getProAndCity()
-print(proAndCity)
+if len(available_table) > 0:
+    getProAndCity()
+    print(proAndCity)
 
-for add in proAndCity:
-    print(add)
-    totalPage = getTotalPage(add)
-    getData(add, totalPage)
-data_list = data_list[:-1]
-data_list += ']'
-print(data_list)
+# for add in proAndCity:
+#     print(add)
+#     totalPage = getTotalPage(add)
+#     getData(add, totalPage)
+# data_list = data_list[:-1]
+# data_list += ']'
+# print(data_list)
